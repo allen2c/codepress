@@ -1,0 +1,32 @@
+[tool.poetry]
+authors = ["Allen Chou <f1470891079@gmail.com>"]
+description = "Transforming code into clean, readable text with precision and style."
+license = "MIT"
+name = "codepress"
+readme = "README.md"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+click = "*"
+logging-bullet-train = "*"
+python = ">=3.12,<4"
+
+[tool.poetry.group.dev.dependencies]
+black = { extras = ["jupyter"], version = "*" }
+isort = "*"
+poetry-plugin-export = "*"
+pytest = "*"
+pytest-asyncio = "*"
+setuptools = "*"
+twine = "*"
+
+[tool.isort]
+profile = "black"
+
+[tool.flake8]
+ignore = ["E203", "E704", "W503"]
+max-line-length = 88
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]

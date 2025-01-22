@@ -1,0 +1,5 @@
+click==8.1.8 ; python_version >= "3.12" and python_version < "4"
+colorama==0.4.6 ; python_version >= "3.12" and python_version < "4"
+logging-bullet-train==0.2.0 ; python_version >= "3.12" and python_version < "4"
+tzdata==2025.1 ; python_version >= "3.12" and python_version < "4" and platform_system == "Windows"
+tzlocal==5.2 ; python_version >= "3.12" and python_version < "4"
