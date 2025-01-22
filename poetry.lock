@@ -1291,6 +1291,18 @@ files = [
 tests = ["pytest"]
 
 [[package]]
+name = "puremagic"
+version = "1.28"
+description = "Pure python implementation of magic file detection"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "puremagic-1.28-py3-none-any.whl", hash = "sha256:e16cb9708ee2007142c37931c58f07f7eca956b3472489106a7245e5c3aa1241"},
+    {file = "puremagic-1.28.tar.gz", hash = "sha256:195893fc129657f611b86b959aab337207d6df7f25372209269ed9e303c1a8c0"},
+]
+
+[[package]]
 name = "pycparser"
 version = "2.22"
 description = "C parser in Python"
@@ -1895,4 +1907,4 @@ test = ["pytest"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4"
-content-hash = "1b7e0d4fb38ee5958085439d6af693a162ac95d0b91ec76ed4d6f170742c18be"
+content-hash = "d72d23818581662ffbdcd49e1fd6db1cea175acc405071c2f12f1cb6f50a268d"
