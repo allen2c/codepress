@@ -7,6 +7,7 @@ import textwrap
 import typing
 
 import jinja2
+import puremagic
 
 LOGGER_NAME = "codepress"
 
@@ -79,6 +80,99 @@ def is_ignored(
     return False
 
 
+def is_text_file(file_path: pathlib.Path | typing.Text) -> bool:
+    """
+    Checks if the given file is likely a text file by:
+    1. Reading a small chunk in binary mode to look for null bytes.
+    2. Attempting to decode the chunk as UTF-8.
+    """
+
+    path = (
+        pathlib.Path(file_path)
+        if not isinstance(file_path, pathlib.Path)
+        else file_path
+    )
+
+    # If it's a directory, it's not a text file
+    if path.is_dir():
+        return False
+
+    try:
+        # Get the MIME type of the file
+        mime_type = puremagic.from_file(str(path), mime=True)
+    except Exception as e:
+        logger.debug(f"Can't determine the MIME type of {path}: {e}")
+        # Fallback: perform a heuristic check
+        try:
+            with open(path, "rb") as f:
+                chunk = f.read(1024)  # read the first 1KB
+            # If null bytes are found, likely not a text file
+            if b"\0" in chunk:
+                return False
+            # Try decoding the chunk as UTF-8 to verify it's text
+            chunk.decode("utf-8")
+            logger.debug(f"Consumed {path} as text")
+            return True
+        except Exception as fallback_e:
+            logger.error(f"Fallback check failed for {path}: {fallback_e}")
+            return False
+
+    # Check if the MIME type indicates a text file
+    if (
+        mime_type.startswith("image/")
+        or mime_type.startswith("video/")
+        or mime_type.startswith("audio/")
+        or mime_type.startswith("font/")
+        or mime_type.startswith("model/")
+    ):
+        return False
+    elif mime_type.startswith("application/"):
+        binary_types = (
+            "font-woff",
+            "font-woff2",
+            "gzip",
+            "mathematica",
+            "octet-stream",
+            "pdf",
+            "vnd.android.package-archive",
+            "vnd.apple.installer+xml",
+            "vnd.autodesk.dwg",
+            "vnd.debian.binary-package",
+            "vnd.dwf",
+            "vnd.dxf",
+            "vnd.google-earth.kml+xml",
+            "vnd.google-earth.kmz",
+            "vnd.ms-excel",
+            "vnd.ms-fontobject",
+            "vnd.ms-powerpoint",
+            "vnd.oasis.opendocument.spreadsheet",
+            "vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "vnd.wolfram.player",
+            "x-7z-compressed",
+            "x-apple-diskimage",
+            "x-bzip2",
+            "x-executable",
+            "x-iso9660-image",
+            "x-java-archive",
+            "x-ms-wmz",
+            "x-msdownload",
+            "x-netcdf",
+            "x-nintendo-3ds-rom",
+            "x-pem-file",
+            "x-pkcs12",
+            "x-rar-compressed",
+            "x-sharedlib",
+            "x-shockwave-flash",
+            "x-tar",
+            "x-x509-ca-cert",
+            "zip",
+        )
+        if any(mime_type.endswith(bt) for bt in binary_types):
+            return False
+
+    return True
+
+
 def read_file(
     file_path: pathlib.Path | typing.Text, truncate_lines: bool | int | None = 5000
 ) -> typing.Text:
@@ -114,6 +208,20 @@ def walk_files(
     truncate_lines: bool | int = 5000,
     **kwargs,
 ) -> typing.Generator[FileWithContent, None, None]:
+    path = pathlib.Path(path) if not isinstance(path, pathlib.Path) else path
+
+    # If the path is a file, yield the file content
+    if path.is_file():
+        _is_text_file = is_text_file(path)
+        if not _is_text_file:
+            logger.info(f"Skipping non-text file: {path}")
+            return
+
+        _file_content = read_file(path, truncate_lines)
+        yield FileWithContent(path, _file_content)
+        return
+
+    # Otherwise, walk the directory and yield the file contents
     for root, _, files in os.walk(path):
         for file in files:
 
@@ -131,11 +239,20 @@ def walk_files(
                 continue
 
             _file_path = pathlib.Path(root).joinpath(file)
-            file_content_obj = FileWithContent(
-                _file_path, read_file(_file_path, truncate_lines)
-            )
+            _is_text_file = is_text_file(_file_path)
+            if not _is_text_file:
+                logger.info(f"Skipping non-text file: {_file_path}")
+                continue
 
-            yield file_content_obj
+            try:
+                _file_content = read_file(_file_path, truncate_lines)
+            except Exception as e:
+                logger.error(f"Error reading file {_file_path}: {e}")
+                continue
+
+            _file_content_obj = FileWithContent(_file_path, _file_content)
+
+            yield _file_content_obj
 
 
 if __name__ == "__main__":
@@ -146,4 +263,5 @@ if __name__ == "__main__":
     for file in walk_files(
         pathlib.Path("."), ignore_patterns=read_gitignore(".gitignore")
     ):
-        print(file.to_content())
+        # print(file.to_content())
+        pass
