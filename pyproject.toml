@@ -8,6 +8,7 @@ version = "0.1.0"
 
 [tool.poetry.dependencies]
 click = "*"
+jinja2 = "*"
 logging-bullet-train = "*"
 python = ">=3.12,<4"
 
