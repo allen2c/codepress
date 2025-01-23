@@ -78,12 +78,16 @@ def main(
         set_logger(LOGGER_NAME)
 
     path = pathlib.Path(path)
+    output = pathlib.Path(output) if output else None
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
     _style_module_name, _style_var_name = output_style.split(":")
     _style_module = importlib.import_module(_style_module_name)
     style = getattr(_style_module, _style_var_name)
     open_fs = open(output, "w") if output else None
     output_content_json: typing.List[typing.Dict[typing.Text, typing.Text]] = []
 
+    # Walk files and process them
     for file in walk_files(
         path,
         ignore_patterns=ignore,
