@@ -6,6 +6,9 @@ name = "codepress"
 readme = "README.md"
 version = "0.1.0"
 
+[tool.poetry.scripts]
+codepress = "codepress.cli:main"
+
 [tool.poetry.dependencies]
 click = "*"
 jinja2 = "*"
@@ -13,6 +16,11 @@ logging-bullet-train = "*"
 pathspec = "*"
 puremagic = "*"
 python = ">=3.12,<4"
+
+[tool.poetry.extras]
+all = []
+
+[tool.poetry.group.all.dependencies]
 
 [tool.poetry.group.dev.dependencies]
 black = { extras = ["jupyter"], version = "*" }

@@ -1904,7 +1904,10 @@ cffi = ">=1.16.0"
 [package.extras]
 test = ["pytest"]
 
+[extras]
+all = []
+
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4"
-content-hash = "bb374084e853e3add0dedaa91f280b128dd66e7b8f9c714f34a0140cb3ee323b"
+content-hash = "4961aed654079f6eaa241a3130516568411032140fc308eea31bd66bcf08cd91"
