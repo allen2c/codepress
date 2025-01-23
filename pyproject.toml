@@ -15,7 +15,7 @@ jinja2 = "*"
 logging-bullet-train = "*"
 pathspec = "*"
 puremagic = "*"
-python = ">=3.12,<4"
+python = ">=3.11,<4"
 
 [tool.poetry.extras]
 all = []
