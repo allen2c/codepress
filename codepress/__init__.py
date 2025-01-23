@@ -9,6 +9,9 @@ import jinja2
 import pathspec
 import puremagic
 
+from codepress.version import VERSION
+
+__version__ = VERSION
 LOGGER_NAME = "codepress"
 
 logger = logging.getLogger(LOGGER_NAME)
