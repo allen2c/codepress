@@ -10,6 +10,7 @@ version = "0.1.0"
 click = "*"
 jinja2 = "*"
 logging-bullet-train = "*"
+pathspec = "*"
 puremagic = "*"
 python = ">=3.12,<4"
 

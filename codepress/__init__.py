@@ -1,4 +1,3 @@
-import fnmatch
 import io
 import logging
 import os
@@ -7,6 +6,7 @@ import textwrap
 import typing
 
 import jinja2
+import pathspec
 import puremagic
 
 LOGGER_NAME = "codepress"
@@ -63,21 +63,6 @@ def read_gitignore(file_path: pathlib.Path | typing.Text) -> typing.List[typing.
             if line and not line.startswith("#"):
                 patterns.append(line)
     return patterns
-
-
-def is_ignored(
-    path: pathlib.Path | typing.Text, patterns: typing.List[typing.Text]
-) -> bool:
-    """
-    Checks if the given path matches any of the `.gitignore` patterns.
-    """
-
-    path = pathlib.Path(path) if not isinstance(path, pathlib.Path) else path
-
-    for pattern in patterns:
-        if fnmatch.fnmatch(path.as_posix(), pattern):
-            return True
-    return False
 
 
 def is_text_file(file_path: pathlib.Path | typing.Text) -> bool:
@@ -202,13 +187,20 @@ def read_file(
 
 def walk_files(
     path: pathlib.Path | typing.Text,
-    ignore_patterns: typing.List[typing.Text],
+    ignore_patterns: typing.Iterable[typing.Text] = (),
     *args,
     ignore_hidden: bool = True,
+    enable_gitignore: bool = True,
     truncate_lines: bool | int = 5000,
     **kwargs,
 ) -> typing.Generator[FileWithContent, None, None]:
     path = pathlib.Path(path) if not isinstance(path, pathlib.Path) else path
+    # Initialize a list to hold all pathspecs
+    spec_list = []
+
+    # Compile the initial ignore patterns using pathspec
+    if ignore_patterns:
+        spec_list.append(pathspec.PathSpec.from_lines("gitwildmatch", ignore_patterns))
 
     # If the path is a file, yield the file content
     if path.is_file():
@@ -222,23 +214,58 @@ def walk_files(
         return
 
     # Otherwise, walk the directory and yield the file contents
-    for root, _, files in os.walk(path):
+    for root, dirs, files in os.walk(path):
+
+        current_dir = pathlib.Path(root)
+
+        # Handle .gitignore files
+        if enable_gitignore:
+            gitignore_path = current_dir / ".gitignore"
+            if gitignore_path.exists():
+                try:
+                    spec_list.append(
+                        pathspec.PathSpec.from_lines(
+                            "gitwildmatch", read_gitignore(gitignore_path)
+                        )
+                    )
+                    logger.debug(f"Loaded .gitignore from {gitignore_path}")
+                except Exception as e:
+                    logger.error(f"Error reading .gitignore at {gitignore_path}: {e}")
+
+        # Prepare the combined spec
+        combined_spec = pathspec.PathSpec.from_lines("gitwildmatch", [])
+        for spec in spec_list:
+            combined_spec = combined_spec + spec
+
+        # Filter directories in-place to respect ignore rules
+        dirs[:] = [
+            d
+            for d in dirs
+            if not (ignore_hidden and d.startswith("."))
+            and not combined_spec.match_file((current_dir / d).relative_to(path))
+        ]
+
         for file in files:
 
-            # Ignore files that match any of the ignore patterns
-            if is_ignored(file, ignore_patterns):
+            # Ignore hidden files if `ignore_hidden` is True
+            if ignore_hidden and file.startswith("."):
                 continue
 
-            # Ignore hidden files and directories
-            if ignore_hidden and (
-                file.startswith(".")  # file name, e.g. .gitignore
-                or any(
-                    part.startswith(".") for part in pathlib.Path(root).parts
-                )  # directory name, e.g. .tox
-            ):
+            _file_path = current_dir / file
+
+            # Compute the relative path from the root path
+            try:
+                relative_path = _file_path.relative_to(path)
+            except ValueError:
+                # If _file_path is not relative to path, skip it
+                logger.warning(f"Skipping {_file_path} as it's not relative to {path}")
                 continue
 
-            _file_path = pathlib.Path(root).joinpath(file)
+            # Check against all ignore patterns
+            if combined_spec.match_file(relative_path):
+                logger.debug(f"Ignored by .gitignore: {relative_path}")
+                continue
+
             _is_text_file = is_text_file(_file_path)
             if not _is_text_file:
                 logger.info(f"Skipping non-text file: {_file_path}")
@@ -260,8 +287,5 @@ if __name__ == "__main__":
 
     set_logger(logger)
 
-    for file in walk_files(
-        pathlib.Path("."), ignore_patterns=read_gitignore(".gitignore")
-    ):
-        # print(file.to_content())
-        pass
+    for file in walk_files(pathlib.Path(".")):
+        logger.info(f"Read {file.path}")
