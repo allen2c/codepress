@@ -18,9 +18,10 @@ puremagic = "*"
 python = ">=3.11,<4"
 
 [tool.poetry.extras]
-all = []
+all = ["tiktoken"]
 
 [tool.poetry.group.all.dependencies]
+tiktoken = { version = ">=0.9,<1" }
 
 [tool.poetry.group.dev.dependencies]
 black = { extras = ["jupyter"], version = "*" }

@@ -11,6 +11,14 @@ import puremagic
 
 from codepress.version import VERSION
 
+try:
+    import tiktoken
+
+    tiktoken_enc = tiktoken.encoding_for_model("gpt-4o")
+except ImportError:
+    tiktoken = None
+    tiktoken_enc = None
+
 __version__ = VERSION
 LOGGER_NAME = "codepress"
 
@@ -35,8 +43,29 @@ class FileWithContent:
         self.path = pathlib.Path(path) if not isinstance(path, pathlib.Path) else path
         self.content = content
 
+        self._total_tokens: int | None = None
+        self._total_lines: int | None = None
+
     def __dict__(self) -> typing.Dict[typing.Text, typing.Text]:
         return {"path": str(self.path), "content": self.content}
+
+    @property
+    def total_tokens(self) -> int:
+        if self._total_tokens is None:
+            if tiktoken_enc is None:
+                logger.warning(
+                    "The 'tiktoken' package is not installed, token count will be 0"
+                )
+                self._total_tokens = 0
+            else:
+                self._total_tokens = len(tiktoken_enc.encode(self.content))
+        return self._total_tokens
+
+    @property
+    def total_lines(self) -> int:
+        if self._total_lines is None:
+            self._total_lines = self.content.count("\n") + 1
+        return self._total_lines
 
     def to_content(self, style: typing.Text = DEFAULT_CONTENT_STYLE) -> typing.Text:
         return jinja2.Template(style).render(file=self)
