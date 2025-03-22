@@ -122,13 +122,30 @@ def main(
                 print(json.dumps(output_content_json, ensure_ascii=False, indent=2))
 
         if inspect:
-            _total_tokens = sum(item[0] for item in files_tokens)
-            print(f"Total tokens: {_total_tokens:,}")
+            from codepress.vizualize import format_bar_with_path, print_color_legend
 
+            _total_tokens = sum(item[0] for item in files_tokens)
+            max_tokens = max(item[0] for item in files_tokens) if files_tokens else 0
+
+            # Print header and summary
+            print("\n" + "=" * 80)
+            print("\033[1m TOKEN USAGE SUMMARY \033[0m")
+            print("=" * 80)
+            print(f"\033[1m Total tokens: {_total_tokens:,} \033[0m\n")
+            print_color_legend()
+
+            # Sort files by token count and take top files
             _sorted_files = sorted(files_tokens, key=lambda x: x[0], reverse=True)
-            print("Top 10 files by token count:")
+            print(
+                f" \033[1m Top {min(10, len(_sorted_files))} files by token count: \033[0m"  # noqa: E501
+            )
+
+            # Print each file with its colored bar
             for i, _item in enumerate(_sorted_files[:10]):
-                print(f"{_item[1]}: {_item[0]:,} tokens")
+                tokens, path = _item
+                percent = (tokens / _total_tokens) * 100 if _total_tokens > 0 else 0
+                bar = format_bar_with_path(tokens, max_tokens, path)
+                print(f" {i + 1:2d}. {bar} {tokens:,} tokens ({percent:.1f}%)")
 
     except Exception as e:
         logger.exception(e)
