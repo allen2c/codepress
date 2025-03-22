@@ -88,30 +88,37 @@ def main(
     output_content_json: typing.List[typing.Dict[typing.Text, typing.Text]] = []
 
     # Walk files and process them
-    for file in walk_files(
-        path,
-        ignore_patterns=ignore,
-        ignore_hidden=ignore_hidden,
-        enable_gitignore=enable_gitignore,
-        truncate_lines=truncate_lines,
-    ):
-        if output_format == "text":
+    try:
+        for file in walk_files(
+            path,
+            ignore_patterns=ignore,
+            ignore_hidden=ignore_hidden,
+            enable_gitignore=enable_gitignore,
+            truncate_lines=truncate_lines,
+        ):
+            if output_format == "text":
+                if open_fs:
+                    open_fs.write(file.to_content(style))
+                else:
+                    print(file.to_content(style))
+
+            elif output_format == "json":
+                output_content_json.append(file.__dict__())
+
+        if output_format == "json":
             if open_fs:
-                open_fs.write(file.to_content(style))
+                json.dump(output_content_json, open_fs, ensure_ascii=False, indent=2)
             else:
-                print(file.to_content(style))
+                print(json.dumps(output_content_json, ensure_ascii=False, indent=2))
 
-        elif output_format == "json":
-            output_content_json.append(file.__dict__())
+    except Exception as e:
+        logger.exception(e)
+        logger.error(f"Error processing file: {file.path}")
+        raise e
 
-    if output_format == "json":
+    finally:
         if open_fs:
-            json.dump(output_content_json, open_fs, ensure_ascii=False, indent=2)
-        else:
-            print(json.dumps(output_content_json, ensure_ascii=False, indent=2))
-
-    if open_fs:
-        open_fs.close()
+            open_fs.close()
 
 
 if __name__ == "__main__":
