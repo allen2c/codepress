@@ -53,6 +53,12 @@ logger = logging.getLogger(__name__)
     help="Output file (default: stdout)",
 )
 @click.option(
+    "--inspect",
+    is_flag=True,
+    default=False,
+    help="Show files with total token count",
+)
+@click.option(
     "--verbose/--no-verbose",
     default=False,
     help="Verbose output",
@@ -66,6 +72,7 @@ def main(
     output_format: typing.Literal["text", "json"],
     output_style: typing.Text,
     output: typing.Text | pathlib.Path | None,
+    inspect: bool,
     verbose: bool,
 ):
     """
@@ -86,6 +93,7 @@ def main(
     style = getattr(_style_module, _style_var_name)
     open_fs = open(output, "w") if output else None
     output_content_json: typing.List[typing.Dict[typing.Text, typing.Text]] = []
+    files_tokens: typing.List[tuple[int, pathlib.Path]] = []
 
     # Walk files and process them
     try:
@@ -96,6 +104,8 @@ def main(
             enable_gitignore=enable_gitignore,
             truncate_lines=truncate_lines,
         ):
+            files_tokens.append((file.total_tokens, file.path))
+
             if output_format == "text":
                 if open_fs:
                     open_fs.write(file.to_content(style))
@@ -110,6 +120,15 @@ def main(
                 json.dump(output_content_json, open_fs, ensure_ascii=False, indent=2)
             else:
                 print(json.dumps(output_content_json, ensure_ascii=False, indent=2))
+
+        if inspect:
+            _total_tokens = sum(item[0] for item in files_tokens)
+            print(f"Total tokens: {_total_tokens:,}")
+
+            _sorted_files = sorted(files_tokens, key=lambda x: x[0], reverse=True)
+            print("Top 10 files by token count:")
+            for i, _item in enumerate(_sorted_files[:10]):
+                print(f"{_item[1]}: {_item[0]:,} tokens")
 
     except Exception as e:
         logger.exception(e)
