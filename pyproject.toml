@@ -16,12 +16,10 @@ logging-bullet-train = "*"
 pathspec = "*"
 puremagic = "*"
 python = ">=3.11,<4"
+tiktoken = { version = ">=0.9,<1", optional = true }
 
 [tool.poetry.extras]
 all = ["tiktoken"]
-
-[tool.poetry.group.all.dependencies]
-tiktoken = { version = ">=0.9,<1" }
 
 [tool.poetry.group.dev.dependencies]
 black = { extras = ["jupyter"], version = "*" }
