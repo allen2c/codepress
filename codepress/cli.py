@@ -104,7 +104,7 @@ def main(
             enable_gitignore=enable_gitignore,
             truncate_lines=truncate_lines,
         ):
-            files_tokens.append((file.total_tokens, file.path))
+            files_tokens.append((file.get_total_tokens(inspect=inspect), file.path))
 
             if output_format == "text":
                 if open_fs:

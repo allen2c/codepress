@@ -50,9 +50,16 @@ class FileWithContent:
         return {"path": str(self.path), "content": self.content}
 
     @property
-    def total_tokens(self) -> int:
+    def total_lines(self) -> int:
+        if self._total_lines is None:
+            self._total_lines = self.content.count("\n") + 1
+        return self._total_lines
+
+    def get_total_tokens(self, *, inspect: bool = False) -> int:
         if self._total_tokens is None:
-            if tiktoken_enc is None:
+            if not inspect:
+                self._total_tokens = 0
+            elif tiktoken_enc is None:
                 logger.warning(
                     "The 'tiktoken' package is not installed, token count will be 0"
                 )
@@ -60,12 +67,6 @@ class FileWithContent:
             else:
                 self._total_tokens = len(tiktoken_enc.encode(self.content))
         return self._total_tokens
-
-    @property
-    def total_lines(self) -> int:
-        if self._total_lines is None:
-            self._total_lines = self.content.count("\n") + 1
-        return self._total_lines
 
     def to_content(self, style: typing.Text = DEFAULT_CONTENT_STYLE) -> typing.Text:
         return jinja2.Template(style).render(file=self)
