@@ -17,7 +17,7 @@ Transforming code into clean, readable text with precision and style.
 
 ## Introduction
 
-**codepress** is a powerful command-line tool designed to transform your codebase into clean, readable text. Whether you're preparing documentation, creating code snippets for tutorials, or simply organizing your projects, codepress ensures that your code is presented with precision and style.
+**codepress** is a powerful command-line tool designed to transform your codebase into clean, readable text. Whether you're preparing documentation, creating code snippets for tutorials, or simply organizing your projects, codepress ensures that your code is presented with precision and style. Additionally, it provides token usage analysis to help you understand the size and complexity of your codebase.
 
 ## Features
 
@@ -26,17 +26,18 @@ Transforming code into clean, readable text with precision and style.
 - **Customizable Output Styles**: Define how your code and file information are formatted.
 - **Gitignore Support**: Automatically respect `.gitignore` patterns to exclude unwanted files.
 - **Line Truncation**: Limit the number of lines read from each file to manage large files efficiently.
+- **Token Usage Analysis**: Inspect and visualize token counts for files in your project.
 - **Verbose Logging**: Get detailed logs to monitor the processing flow.
 - **Extensible**: Easily integrate with other tools and workflows.
 
 ## Installation
 
-Ensure you have Python **3.12** or higher installed.
+Ensure you have Python **3.11** or higher installed.
 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/AllenChou/codepress.git
+   git clone https://github.com/allen2c/codepress.git
    cd codepress
    ```
 
@@ -96,6 +97,9 @@ codepress [OPTIONS] [PATH]
 - `--output PATH`
   Output file. Defaults to `stdout` if not specified.
 
+- `--inspect`
+  Show files with total token count and usage summary.
+
 - `--verbose / --no-verbose`
   Enable verbose output. Default is `--no-verbose`.
 
@@ -138,6 +142,12 @@ codepress [OPTIONS] [PATH]
 
    ```bash
    codepress ./my_project --no-enable-gitignore
+   ```
+
+7. **Inspect Token Usage**
+
+   ```bash
+   codepress ./my_project --inspect
    ```
 
 ## Configuration

@@ -4,7 +4,8 @@ description = "Transforming code into clean, readable text with precision and st
 license = "MIT"
 name = "codepress"
 readme = "README.md"
-version = "0.2.1"
+repository = "https://github.com/allen2c/codepress"
+version = "0.2.2"
 
 [tool.poetry.scripts]
 codepress = "codepress.cli:main"
